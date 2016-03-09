@@ -1,0 +1,42 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".FoodFragment"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+     >
+
+    <TextView
+        android:id="@+id/food_display"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="hello_world" />
+
+    <TextView
+        android:id="@+id/item_quantity_display"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Input Item Quantity:"
+        android:layout_below="@+id/food_display"
+        android:layout_alignParentStart="true"/>
+
+    <EditText
+        android:layout_width="200dip"
+        android:layout_height="wrap_content"
+        android:id="@+id/item_quantity"
+        android:layout_below="@+id/item_quantity_display"
+        android:layout_alignParentStart="true"
+        android:inputType="number" />
+
+    <Button
+        android:id="@+id/return_to_menu"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:text="Add to Cart"
+        android:layout_below="@id/item_quantity"
+        android:layout_alignParentBottom="true" />
+
+</RelativeLayout>

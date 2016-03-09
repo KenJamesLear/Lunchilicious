@@ -1,0 +1,52 @@
+<resources>
+    <string name="app_name">Lunchilicious</string>
+    <string name="action_settings">Settings</string>
+
+    <string-array name="foodItems">
+        <item>Pizza</item>
+        <item>Sandwich</item>
+        <item>Pasta</item>
+        <item>CheeseBurger</item>
+        <item>Bottled Coke</item>
+        <item>Bottled Water</item>
+    </string-array>
+
+    <integer-array name="quantityOfItems">
+        <item>0</item>
+        <item>0</item>
+        <item>0</item>
+        <item>0</item>
+        <item>0</item>
+        <item>0</item>
+    </integer-array>
+
+    <integer-array name="Calories">
+        <item>7</item>
+        <item>8</item>
+        <item>9</item>
+        <item>10</item>
+        <item>11</item>
+        <item>12</item>
+    </integer-array>
+
+    <string-array name="Description">
+        <item>Includes Pepperoni!</item>
+        <item>Extra Bacon!</item>
+        <item>Topped with Sauce!</item>
+        <item>Fresh Bread!</item>
+        <item>New Flavor of Coke!</item>
+        <item>Wet!</item>
+    </string-array>
+
+    <string-array name="Cost">
+        <item>5.00</item>
+        <item>10.00</item>
+        <item>9.45</item>
+        <item>8.50</item>
+        <item>2.15</item>
+        <item>1.75</item>
+    </string-array>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>
