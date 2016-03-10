@@ -1,6 +1,7 @@
 package edu.scranton.lear.lunchilicious;
 
 import android.content.Context;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -11,6 +12,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.view.MenuInflater;
+import android.view.inputmethod.InputMethodManager;
 
 
 
@@ -41,7 +43,7 @@ public class FoodFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         // tell the host activity that this fragment adds items to the appbar
-        setHasOptionsMenu(true);
+        //setHasOptionsMenu(true);
 
         // get the position of the selected article. if not set, use 0
         Bundle bundle = getArguments();
@@ -80,13 +82,17 @@ public class FoodFragment extends Fragment {
         mTextView.setTextSize(20);
         updateDisplay(mPosition);
 
+
         mReturnButton = (Button) view.findViewById(R.id.return_to_menu);
         mReturnButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mQuantity = Integer.parseInt(mEditText.getText().toString());
+                if (mEditText.getText().toString().compareTo("")!=0)
+                    mQuantity = Integer.parseInt(mEditText.getText().toString());
+               else mQuantity = 0;
                 if (mQuantity < 0 || mQuantity > 100) {
                     mQuantity = 0;
+
                 }
                 mAddListener.addQuantity(mPosition, mQuantity);
             }

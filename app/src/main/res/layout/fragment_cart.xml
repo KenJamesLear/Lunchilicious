@@ -21,14 +21,13 @@
         android:text="Total: "
         android:layout_below="@id/food_display"/>
 
-
     <Button
         android:id="@+id/cancel_button"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:text="Cancel Order"
-        android:layout_below="@id/total_display"
-        android:layout_alignParentBottom="true" />
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true" />
 
 
 

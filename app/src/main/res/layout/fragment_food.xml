@@ -21,22 +21,26 @@
         android:layout_height="wrap_content"
         android:text="Input Item Quantity:"
         android:layout_below="@+id/food_display"
-        android:layout_alignParentStart="true"/>
+        android:layout_alignParentStart="true"
+        android:textSize="20dp"/>
 
     <EditText
-        android:layout_width="200dip"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:inputType="number"
+        android:ems="10"
         android:id="@+id/item_quantity"
         android:layout_below="@+id/item_quantity_display"
-        android:layout_alignParentStart="true"
-        android:inputType="number" />
+        android:layout_alignParentStart="true" />
 
     <Button
-        android:id="@+id/return_to_menu"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="50dp"
-        android:text="Add to Cart"
-        android:layout_below="@id/item_quantity"
-        android:layout_alignParentBottom="true" />
+        android:text="Add To Cart"
+        android:id="@+id/return_to_menu"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignEnd="@+id/item_quantity_display" />
+
 
 </RelativeLayout>

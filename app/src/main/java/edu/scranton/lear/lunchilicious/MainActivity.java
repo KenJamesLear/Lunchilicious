@@ -15,6 +15,8 @@ public class MainActivity extends AppCompatActivity implements
         CartFragment.OnCartCancelListener{
 
     private int[] mQuantityArray;
+    Menu mMenu;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -34,12 +36,15 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
+        mMenu = menu;
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
 
     public void onItemSelected(int position){
+        MenuItem hideCart = mMenu.findItem(R.id.shopping_cart);
+        hideCart.setVisible(false);
         FragmentManager fragmentManager = getSupportFragmentManager();
         FoodFragment foodDescription;
         foodDescription = new FoodFragment();
@@ -65,8 +70,8 @@ public class MainActivity extends AppCompatActivity implements
         }
 
         if (id == R.id.shopping_cart) {
-            //TODO: start third Fragment
-           // Toast.makeText(this, "HEY YOU'RE CUTE", Toast.LENGTH_LONG).show();
+            MenuItem hideCart = mMenu.findItem(R.id.shopping_cart);
+            hideCart.setVisible(false);
             FragmentManager fragmentManager = getSupportFragmentManager();
             CartFragment foodCart;
             foodCart = new CartFragment();
@@ -82,21 +87,31 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     public void addQuantity(int food, int quantity) {
-        int count = getSupportFragmentManager().getBackStackEntryCount();
-       // Toast.makeText(this, "Quantity = " + quantity, Toast.LENGTH_LONG).show();
         mQuantityArray[food] += quantity;
-        // if count is 0, then the detail fragment did not replace headline fragment
-        // in other words, the large screen is being used. so simply return.
-       /* if (count < 1) return;
+        MenuItem hideCart = mMenu.findItem(R.id.shopping_cart);
+        hideCart.setVisible(true);
         if (getSupportFragmentManager().popBackStackImmediate("DETAILS", FragmentManager.POP_BACK_STACK_INCLUSIVE)) {
-            Toast.makeText(this, "Returned from Detail", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Returned from Detail", Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(this, "Pop from Backstack failed", Toast.LENGTH_LONG).show();
-        }*/
+            Toast.makeText(this, "Pop from Backstack failed", Toast.LENGTH_SHORT).show();
+        }
     }
 
     public void onCancelCart(){
+        MenuItem hideCart = mMenu.findItem(R.id.shopping_cart);
+        hideCart.setVisible(true);
+        mQuantityArray = getResources().getIntArray(R.array.quantityOfItems);
+        if (getSupportFragmentManager().popBackStackImmediate("CART", FragmentManager.POP_BACK_STACK_INCLUSIVE)) {
+            Toast.makeText(this, "Returned from Cart", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "Pop from Backstack failed", Toast.LENGTH_SHORT).show();
+        }
+    }
 
+    public void onBackPressed(){
+        MenuItem hideCart = mMenu.findItem(R.id.shopping_cart);
+        hideCart.setVisible(true);
+        getSupportFragmentManager().popBackStackImmediate();
     }
 
 

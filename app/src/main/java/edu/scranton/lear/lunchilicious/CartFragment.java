@@ -35,7 +35,7 @@ public class CartFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         // tell the host activity that this fragment adds items to the appbar
-        setHasOptionsMenu(true);
+        //setHasOptionsMenu(true);
 
         // get the position of the selected article. if not set, use 0
 
