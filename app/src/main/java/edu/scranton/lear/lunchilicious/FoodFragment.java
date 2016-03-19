@@ -21,6 +21,10 @@ import android.view.inputmethod.InputMethodManager;
 
 public class FoodFragment extends Fragment {
 
+    public interface OnAdditemListener {
+        void addQuantity(int food,int quantity);
+    }
+    
     private OnAdditemListener mAddListener;
     private String[] mFoods;
     private String[] mCost;
@@ -32,7 +36,6 @@ public class FoodFragment extends Fragment {
     private int mPosition = 0;
     private int mQuantity;
     public static final String ARG_POSITION ="edu.scranton.lear.lunchilious.ARG_POSITION";
-
 
     public FoodFragment() {
         // Required empty public constructor
@@ -55,6 +58,7 @@ public class FoodFragment extends Fragment {
         mDescription = getResources().getStringArray(R.array.Description);
         mQuantity = 0;
 
+
     }
 
     @Override
@@ -69,10 +73,6 @@ public class FoodFragment extends Fragment {
         mAddListener = (OnAdditemListener) context;
     }
 
-    public interface OnAdditemListener {
-        void addQuantity(int food,int quantity);
-    }
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle
             savedInstanceState) {
@@ -80,6 +80,7 @@ public class FoodFragment extends Fragment {
         mTextView = (TextView) view.findViewById(R.id.food_display);
         mEditText = (EditText) view.findViewById(R.id.item_quantity);
         mTextView.setTextSize(20);
+
         updateDisplay(mPosition);
 
 
@@ -92,8 +93,9 @@ public class FoodFragment extends Fragment {
                else mQuantity = 0;
                 if (mQuantity < 0 || mQuantity > 100) {
                     mQuantity = 0;
-
                 }
+                InputMethodManager mgr = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                mgr.hideSoftInputFromWindow(mEditText.getWindowToken(), 0);
                 mAddListener.addQuantity(mPosition, mQuantity);
             }
         });
@@ -101,15 +103,13 @@ public class FoodFragment extends Fragment {
 
         return view;
     }
-
-
-
     public void updateDisplay(int position) {
 
-        mTextView.setText(mFoods[position]+"\n"+"Calories: "+mCalories[position]+"\n"+
-            "Cost: $" + mCost[position]+ "\n" + "Description:\n"+ mDescription[position]);
+        mTextView.setText(mFoods[position] + "\n" + "Calories: " + mCalories[position] + "\n" +
+                "Cost: $" + mCost[position] + "\n" + "Description:\n" + mDescription[position]);
         mTextView.refreshDrawableState();
     }
 
+    public void setPosition(int position) {this.mPosition = position;}
 
 }

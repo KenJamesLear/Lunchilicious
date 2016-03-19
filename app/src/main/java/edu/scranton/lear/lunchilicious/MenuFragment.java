@@ -18,12 +18,14 @@ import android.widget.Toast;
 
 public class MenuFragment extends ListFragment {
 
-    private OnMenuListener mListener;
-    private Activity mActivity = null;
-
     public interface OnMenuListener {
         void onItemSelected(int position);
     }
+
+    private OnMenuListener mListener;
+    private Activity mActivity = null;
+
+
 
     @Override
     public void onAttach(Context activity) {
@@ -46,7 +48,6 @@ public class MenuFragment extends ListFragment {
     public void onListItemClick(ListView l, View v, int position, long id) {
 
         Context context = mActivity.getApplicationContext();
-        Toast.makeText(context, "main activity " + position, Toast.LENGTH_LONG).show();
         try {
             mListener = (OnMenuListener) mActivity;
         } catch (ClassCastException e) {
