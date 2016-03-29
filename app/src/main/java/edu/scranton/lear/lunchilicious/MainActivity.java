@@ -189,6 +189,4 @@ public class MainActivity extends AppCompatActivity implements
         mDataFragment.setPosition(mPosition);
         mDataFragment.setQuantities(mQuantityArray);
     }
-
-
 }
