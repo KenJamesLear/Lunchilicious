@@ -1,6 +1,8 @@
 package edu.scranton.lear.lunchilicious;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -14,9 +16,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity implements
-        MenuFragment.OnMenuListener, FoodFragment.OnAdditemListener
-        /*,CartFragment.OnCartCancelListener*/{
+        MenuFragment.OnMenuListener, FoodFragment.OnAdditemListener, MenuFragment.DbProvider,
+        FoodFragment.DbProvider, CartFragment.DbProvider, CartFragment.OnConfirmationListener,
+        ConfirmationFragment.DbProvider, ConfirmationFragment.OnOkListener
+        {
 
+    private SQLiteDatabase mReadOnlyDb;
+    private SQLiteDatabase mWritableDb;
     private RetainedFragment mDataFragment;
     private int[] mQuantityArray;
     Menu mMenu;
@@ -28,6 +34,12 @@ public class MainActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        CartOrderDbOpenHelper dbHelper = new CartOrderDbOpenHelper(this);
+
+        mReadOnlyDb = dbHelper.getReadableDatabase();
+        mWritableDb = dbHelper.getWritableDatabase();
+
 
         FragmentManager fm = getSupportFragmentManager();
         mDataFragment = (RetainedFragment) fm.findFragmentByTag("retained_data");
@@ -75,12 +87,10 @@ public class MainActivity extends AppCompatActivity implements
 
             // large device is used and so ArticleFragment is inflated
             // you can use findViewById() to find UI widgets in the Fragment
-            //TextView textView = (TextView) findViewById(R.id.food_display);
-            //textView.setText("HELLLOOOOOOOOO");
-
+            //CHECK TAGs HERE
                 FoodFragment foodDetail = new FoodFragment();
                 FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-                ft.add(R.id.frame_container_second, foodDetail);
+                ft.add(R.id.frame_container_second, foodDetail,"FOODDESCRIPTION");
                 foodDetail.setPosition(mPosition);
                 ft.commit();
 
@@ -119,7 +129,7 @@ public class MainActivity extends AppCompatActivity implements
             foodDescription.setArguments(args);
 
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-            transaction.replace(R.id.frame_container, foodDescription);
+            transaction.replace(R.id.frame_container, foodDescription, "FOODDESCRIPTION");
             transaction.addToBackStack("DETAILS");
             transaction.commit();
         }
@@ -150,12 +160,12 @@ public class MainActivity extends AppCompatActivity implements
             foodCart.setArguments(args);
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
             if (foodDescription != null) {
-                transaction.replace(R.id.frame_container_second, foodCart);
+                transaction.replace(R.id.frame_container_second, foodCart, "FOODCART");
             }
             else{
-                transaction.replace(R.id.frame_container, foodCart);
+                transaction.replace(R.id.frame_container, foodCart, "FOODCART");
+                transaction.addToBackStack("CART");
             }
-            transaction.addToBackStack("CART");
             transaction.commit();
         }
         return super.onOptionsItemSelected(item);
@@ -168,12 +178,6 @@ public class MainActivity extends AppCompatActivity implements
         getSupportFragmentManager().popBackStackImmediate();
     }
 
-    /*public void onCancelCart(){
-        MenuItem hideCart = mMenu.findItem(R.id.shopping_cart);
-        hideCart.setVisible(true);
-        mQuantityArray = getResources().getIntArray(R.array.quantityOfItems);
-        getSupportFragmentManager().popBackStackImmediate();
-    }*/
 
     public void onBackPressed(){
         MenuItem hideCart = mMenu.findItem(R.id.shopping_cart);
@@ -185,8 +189,41 @@ public class MainActivity extends AppCompatActivity implements
     public void onDestroy() {
         super.onDestroy();
 
+        if (mReadOnlyDb != null) mReadOnlyDb.close();
+        if (mWritableDb != null) mWritableDb.close();
+
         // save updated data in retainedFragment
         mDataFragment.setPosition(mPosition);
         mDataFragment.setQuantities(mQuantityArray);
     }
+
+    public SQLiteDatabase getmReadOnlyDb(){
+        return mReadOnlyDb;
+    }
+    public SQLiteDatabase getmWritableDb(){
+        return mWritableDb;
+    }
+
+    public void onConfirmation(long purchaseOrderId){
+        mQuantityArray = getResources().getIntArray(R.array.quantityOfItems);
+        ConfirmationFragment confirmFragment = new ConfirmationFragment();
+        Bundle args = new Bundle();
+        args.putLong(ConfirmationFragment.ARG_PURCHASEORDERID, purchaseOrderId);
+        confirmFragment.setArguments(args);
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(R.id.frame_container, confirmFragment);
+        transaction.addToBackStack("CONFIRMATION");
+        transaction.commit();
+    }
+
+    public void onOkClicked(){
+        MenuItem hideCart = mMenu.findItem(R.id.shopping_cart);
+        hideCart.setVisible(true);
+        MenuFragment foodMenu = new MenuFragment();
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        ft.replace(R.id.frame_container, foodMenu);
+        ft.commit();
+    }
+
+
 }

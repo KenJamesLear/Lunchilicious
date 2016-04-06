@@ -1,6 +1,9 @@
 package edu.scranton.lear.lunchilicious;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -16,27 +19,37 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 
-public class CartFragment extends Fragment {
+public class CartFragment extends Fragment implements View.OnClickListener{
 
-    /*public interface OnCartCancelListener {
-        void onCancelCart();
-    }*/
+    public interface OnConfirmationListener {
+        void onConfirmation(long purchaseOrderId);
+    }
+
+    public interface DbProvider {
+        SQLiteDatabase getmReadOnlyDb();
+        SQLiteDatabase getmWritableDb();
+    }
 
     //private OnCartCancelListener mCancelListener;
     public static final String ARG_QUANTITIES ="edu.scranton.lear.lunchilious.ARG_QUANTITIES";
-    public int[] mFoodQuantites;
-    private Button mCancelButton;
-    private TextView mQuanTextView;
-    private TextView mTotalTextView;
-    private String[] mFoods;
-    private String[] mCost;
-    LinearLayout mLinearContainer;
-    ArrayList<TextView> mTextViews;
-    ArrayList<Integer> mViewIds;
-
+    public int[] mFoodQuantities;
+    private ArrayList<String> mFoods;
+    private ArrayList<Double> mCost;
+    private LinearLayout mLinearContainer;//changed to private
+    private ArrayList<TextView> mTextViews;
+    private ArrayList<Integer> mViewIds;
+    private ArrayList<Button> mButtons;
+    private ArrayList<Integer> mButtonIds;
+    private SQLiteDatabase mReadOnlyDb;
+    private SQLiteDatabase mWritableDb;
+    private DbProvider provider;
+    private OnConfirmationListener mConfirmationListener;
+    private double mTotal;
 
 
     public CartFragment() {
@@ -51,84 +64,108 @@ public class CartFragment extends Fragment {
 
 
         Bundle bundle = getArguments();
-        if (bundle != null) mFoodQuantites = bundle.getIntArray(CartFragment.ARG_QUANTITIES);
-        else mFoodQuantites= getResources().getIntArray(R.array.quantityOfItems);
+        if (bundle != null) mFoodQuantities = bundle.getIntArray(CartFragment.ARG_QUANTITIES);
+        else mFoodQuantities= getResources().getIntArray(R.array.quantityOfItems);
 
-        mFoods= getResources().getStringArray(R.array.foodItems);
-        mCost = getResources().getStringArray(R.array.Cost);
-
+        mFoods= new ArrayList<>();
+        mCost = new ArrayList<>();
         mTextViews = new ArrayList<>();
         mViewIds = new ArrayList<>();
+        mButtons = new ArrayList<>();
+        mButtonIds = new ArrayList<>();
 
-        // get the linearLayout container
     }
 
     private void inflateLinearContainer() {
 
-        TextView cartDisplay = new TextView(getActivity());
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+
+        TextView cartIntro = new TextView(getActivity());
         TextView cartTotal = new TextView(getActivity());
 
         int id = View.generateViewId();
-        cartDisplay.setId(id);
+        cartIntro.setId(id);
         // keep a reference to the TextView
-        mTextViews.add(cartDisplay);
+        mTextViews.add(cartIntro);
         // keep the id  of the TextView
         mViewIds.add(id);
+        String output = "Welcome to the Cart:";
+        cartIntro.setText(output);
+        cartIntro.setFreezesText(true);
+        cartIntro.setTextSize(TypedValue.COMPLEX_UNIT_SP, 30);
+        cartIntro.setLayoutParams(params);
+        mLinearContainer.addView(cartIntro);
 
+
+
+        TextView cartDisplay;
+        for (int i = 0;i<mFoodQuantities.length;i++)
+        {
+            if (mFoodQuantities[i]>0) {
+                cartDisplay = new TextView(getActivity());
+                id = View.generateViewId();
+                cartDisplay.setId(id);
+                mTextViews.add(cartDisplay);
+                mViewIds.add(id);
+                cartDisplay.setText(mFoods.get(i) + ":" + mFoodQuantities[i]);
+                cartDisplay.setFreezesText(true);
+                cartDisplay.setTextSize(TypedValue.COMPLEX_UNIT_SP, 30);
+                cartDisplay.setLayoutParams(params);
+                mLinearContainer.addView(cartDisplay);
+                /*if (i != 5) output += mFoods.get(i) + ": " + mFoodQuantities[i] + "\n";
+                else output += mFoods.get(i) + ": " + mFoodQuantities[i];*/
+            }
+        }
+        //cartDisplay.setText(output);
+
+        //total display
         id = View.generateViewId();
         cartTotal.setId(id);
         mTextViews.add(cartTotal);
         mViewIds.add(id);
-
-        // you can further manipulate the attributes of the TextView
-        cartDisplay.setFreezesText(true);
-        cartDisplay.setTextSize(TypedValue.COMPLEX_UNIT_SP, 30);
         cartTotal.setFreezesText(true);
         cartTotal.setTextSize(TypedValue.COMPLEX_UNIT_SP, 30);
-        //\cartTotal.align;
-
-        String output = "Welcome to the Cart: \n";
-        for (int i = 0;i<6;i++)
-        {
-            if (mFoodQuantites[i]>0) {
-                if (i != 5) output += mFoods[i] + ": " + mFoodQuantites[i] + "\n";
-                else output += mFoods[i] + ": " + mFoodQuantites[i];
-            }
-        }
-        cartDisplay.setText(output);
-
-        double total = updateTotal(mFoodQuantites);
+        mTotal = updateTotal(mFoodQuantities);
         DecimalFormat money;
         money = new DecimalFormat("$0.00");
-        cartTotal.setText("Total: " + money.format(total));
-
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        cartDisplay.setLayoutParams(params);
+        cartTotal.setText("Total: " + money.format(mTotal));
         cartTotal.setLayoutParams(params);
-
-
-        // add the new row to the linearlayout container
-        mLinearContainer.addView(cartDisplay);
         mLinearContainer.addView(cartTotal);
 
 
+        // -- add a button to the linearyLayout container
+        Button button  = new Button(getActivity());
+        button.setText("Check Out");
+        button.setOnClickListener(this);
+
+        id = View.generateViewId();
+        button.setId(id);
+        mButtons.add(button);
+        mButtonIds.add(id);
+
+        LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        button.setLayoutParams(buttonParams);
+
+        mLinearContainer.addView(button);
 
     }
 
 
-    @Override
+    /* @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater menuInflater) {
         // Inflate the menu; this adds items to the action bar if it is present.
         //menuInflater.inflate(R.menu.menu_main, menu);
-    }
+    }*/
 
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
         //mCancelListener = (OnCartCancelListener) context;
-
+        provider = (DbProvider) getActivity();
+        mConfirmationListener = (OnConfirmationListener) context;
     }
 
 
@@ -137,38 +174,45 @@ public class CartFragment extends Fragment {
             savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_cart,  container, false);
         mLinearContainer = (LinearLayout) view.findViewById(R.id.my_linearlayout_cart);
-        //mQuanTextView = (TextView) view.findViewById(R.id.food_display);
-        //mQuanTextView.setTextSize(20);
-        //mTotalTextView = (TextView) view.findViewById(R.id.total_display);
-        //updateDisplay(mFoodQuantites, view);
+        mReadOnlyDb = provider.getmReadOnlyDb();
+        mWritableDb = provider.getmWritableDb();
 
-        /*mCancelButton = (Button) view.findViewById(R.id.cancel_button);
-        mCancelButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mCancelListener.onCancelCart();
+        String[] projection = {
+                CartOrderContract.Product.COLUMN_NAME_NAME,
+                CartOrderContract.Product.COLUMN_NAME_PRICE
+        };
+        Cursor c = null;
+        try {
+            c = mReadOnlyDb.query(
+                    CartOrderContract.Product.TABLE_NAME,          // table name
+                    projection,                   // The columns to return
+                    null,                    // The columns for the WHERE clause
+                    null,                    // The values for the WHERE clause
+                    null,                         // don't group the rows
+                    null,                         // don't filter by row groups
+                    null                     // The sort order
+            );
+
+            for( c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
+                String foodName = c.getString(0);
+                double foodPrice = c.getDouble(1);
+                mFoods.add(foodName);
+                mCost.add(foodPrice);
             }
-        });*/
+            // get data out of cursor, i.e.,
+            // firstName = cursor.getString(1);
+        } catch (Exception e) {
+
+            // handle all exceptions as needed
+        } finally {     // this guarantees the cursor is closed.
+            if(c != null) {
+                c.close();
+            }
+        }
+
         inflateLinearContainer();
         return view;
 
-    }
-
-    public void updateDisplay(int[] quantities, View v){
-        String output = "Welcome to the Cart: \n";
-        for (int i = 0;i<6;i++)
-        {
-            if (quantities[i]>0) {
-                if (i != 5) output += mFoods[i] + ": " + quantities[i] + "\n";
-                else output += mFoods[i] + ": " + quantities[i];
-            }
-        }
-        mQuanTextView.setText(output);
-        mQuanTextView.refreshDrawableState();
-        double total = updateTotal(quantities);
-        DecimalFormat money;
-        money = new DecimalFormat("$0.00");
-        mTotalTextView.setText("Total: " + money.format(total));
     }
 
     public double updateTotal(int[] quantities){
@@ -176,9 +220,40 @@ public class CartFragment extends Fragment {
         for (int i = 0;i<6;i++)
         {
             if (quantities[i]>0)
-                total += Double.parseDouble(mCost[i]) *  quantities[i];
+                total += mCost.get(i) *  quantities[i];
         }
         return total;
     }
+
+    @Override
+    public void onClick(View v) {
+        if (v.getId() == mButtonIds.get(0)){
+            //purchase order
+            String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+            ContentValues purchaseOrder = new ContentValues();
+            purchaseOrder.put(CartOrderContract.PurchaseOrder.COLUMN_NAME_ORDERDATE, timeStamp);
+            purchaseOrder.put(CartOrderContract.PurchaseOrder.COLUMN_NAME_TOTALCOST, mTotal);
+            long purchaseOrderId = mWritableDb.insert(CartOrderContract.PurchaseOrder.TABLE_NAME,null,purchaseOrder);
+
+            //orderDetails
+            int lineNo = 1;
+            int amountOfItems = mFoodQuantities.length;
+            for (int i = 0;i<amountOfItems;i++){
+                if (mFoodQuantities[i] > 0){
+                    ContentValues orderDetails = new ContentValues();
+                    orderDetails.put(CartOrderContract.OrderDetails.COLUMN_NAME_PURCHASEORDERID,purchaseOrderId);
+                    orderDetails.put(CartOrderContract.OrderDetails.COLUMN_NAME_LINENO,lineNo);
+                    lineNo++;
+                    orderDetails.put(CartOrderContract.OrderDetails.COLUMN_NAME_PRODUCTNAME, mFoods.get(i));
+                    orderDetails.put(CartOrderContract.OrderDetails.COLUMN_NAME_QUANTITY, mFoodQuantities[i]);
+                    mWritableDb.insert(CartOrderContract.OrderDetails.TABLE_NAME,null,orderDetails);
+                }
+            }
+
+            mConfirmationListener.onConfirmation(purchaseOrderId);
+        }
+    }
+
+
 
 }

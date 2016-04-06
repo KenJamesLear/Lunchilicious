@@ -1,6 +1,8 @@
 package edu.scranton.lear.lunchilicious;
 
 import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -14,9 +16,8 @@ import android.widget.TextView;
 import android.view.MenuInflater;
 import android.view.inputmethod.InputMethodManager;
 
-
-
-
+import java.text.DecimalFormat;
+import java.util.ArrayList;
 
 
 public class FoodFragment extends Fragment {
@@ -24,18 +25,25 @@ public class FoodFragment extends Fragment {
     public interface OnAdditemListener {
         void addQuantity(int food,int quantity);
     }
+
+    public interface DbProvider {
+        SQLiteDatabase getmReadOnlyDb();
+        SQLiteDatabase getmWritableDb();
+    }
     
     private OnAdditemListener mAddListener;
-    private String[] mFoods;
-    private String[] mCost;
-    private int[] mCalories;
-    private String[] mDescription;
+    private ArrayList<String> mFoods;
+    private  ArrayList<Double> mCost;
+    private  ArrayList<Integer> mCalories;
+    private  ArrayList<String> mDescription;
     private TextView mTextView;
     private EditText mEditText;
     private Button mReturnButton;
     private int mPosition = 0;
     private int mQuantity;
     public static final String ARG_POSITION ="edu.scranton.lear.lunchilious.ARG_POSITION";
+    private SQLiteDatabase mReadOnlyDb;
+    private DbProvider provider;
 
     public FoodFragment() {
         // Required empty public constructor
@@ -52,11 +60,11 @@ public class FoodFragment extends Fragment {
         Bundle bundle = getArguments();
         if (bundle != null) mPosition = bundle.getInt(FoodFragment.ARG_POSITION, 0);
 
-        mFoods= getResources().getStringArray(R.array.foodItems);
-        mCost = getResources().getStringArray(R.array.Cost);
-        mCalories = getResources().getIntArray(R.array.Calories);
-        mDescription = getResources().getStringArray(R.array.Description);
         mQuantity = 0;
+        mFoods = new ArrayList<>();
+        mDescription = new ArrayList<>();
+        mCost = new ArrayList<>();
+        mCalories = new ArrayList<>();
 
 
     }
@@ -71,6 +79,7 @@ public class FoodFragment extends Fragment {
     public void onAttach(Context context) {
         super.onAttach(context);
         mAddListener = (OnAdditemListener) context;
+        provider = (DbProvider) getActivity();
     }
 
     @Override
@@ -81,8 +90,49 @@ public class FoodFragment extends Fragment {
         mEditText = (EditText) view.findViewById(R.id.item_quantity);
         mTextView.setTextSize(20);
 
-        updateDisplay(mPosition);
+        mReadOnlyDb = provider.getmReadOnlyDb();
 
+
+        String[] projection = {
+                CartOrderContract.Product.COLUMN_NAME_NAME,
+                CartOrderContract.Product.COLUMN_NAME_DESCRIPTION,
+                CartOrderContract.Product.COLUMN_NAME_PRICE,
+                CartOrderContract.Product.COLUMN_NAME_CALORIES
+        };
+        Cursor c = null;
+        try {
+            c = mReadOnlyDb.query(
+                    CartOrderContract.Product.TABLE_NAME,          // table name
+                    projection,                   // The columns to return
+                    null,                    // The columns for the WHERE clause
+                    null,                    // The values for the WHERE clause
+                    null,                         // don't group the rows
+                    null,                         // don't filter by row groups
+                    null                     // The sort order
+            );
+
+            for( c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
+                String foodName = c.getString(0);
+                String foodDescription = c.getString(1);
+                double foodPrice = c.getDouble(2);
+                int foodCalories = c.getInt(3);
+                mFoods.add(foodName);
+                mDescription.add(foodDescription);
+                mCost.add(foodPrice);
+                mCalories.add(foodCalories);
+            }
+            // get data out of cursor, i.e.,
+            // firstName = cursor.getString(1);
+        } catch (Exception e) {
+
+            // handle all exceptions as needed
+        } finally {     // this guarantees the cursor is closed.
+            if(c != null) {
+                c.close();
+            }
+        }
+
+        updateDisplay(mPosition);
 
         mReturnButton = (Button) view.findViewById(R.id.return_to_menu);
         mReturnButton.setOnClickListener(new View.OnClickListener() {
@@ -94,20 +144,24 @@ public class FoodFragment extends Fragment {
                 if (mQuantity < 0 || mQuantity > 100) {
                     mQuantity = 0;
                 }
-                InputMethodManager mgr = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                InputMethodManager mgr = (InputMethodManager) getActivity().getSystemService
+                        (Context.INPUT_METHOD_SERVICE);
                 mgr.hideSoftInputFromWindow(mEditText.getWindowToken(), 0);
                 mAddListener.addQuantity(mPosition, mQuantity);
             }
         });
 
-
         return view;
     }
-    public void updateDisplay(int position) {
 
-        mTextView.setText(mFoods[position] + "\n" + "Calories: " + mCalories[position] + "\n" +
-                "Cost: $" + mCost[position] + "\n" + "Description:\n" + mDescription[position]);
+    public void updateDisplay(int position) {
+        mPosition = position;
+        DecimalFormat money = new DecimalFormat("$0.00");
+        mTextView.setText(mFoods.get(position) + "\n" + "Calories: " + mCalories.get(position) +
+                "\n" + "Cost: " + money.format(mCost.get(position)) + "\n" + "Description:\n"
+                + mDescription.get(position));
         mTextView.refreshDrawableState();
+
     }
 
     public void setPosition(int position) {this.mPosition = position;}
