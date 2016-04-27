@@ -193,7 +193,7 @@ public class ConfirmationFragment extends Fragment implements View.OnClickListen
         mTextViews.add(cartIntro);
         // keep the id  of the TextView
         mViewIds.add(id);
-        String output = "Welcome to the Cart:";
+        String output = "Confirm Cart:";
         cartIntro.setText(output);
         cartIntro.setFreezesText(true);
         cartIntro.setTextSize(TypedValue.COMPLEX_UNIT_SP, 30);

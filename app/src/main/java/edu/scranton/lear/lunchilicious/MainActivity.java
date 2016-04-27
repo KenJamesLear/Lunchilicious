@@ -201,13 +201,21 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     public void createConfirmationFrag(long purchaseOrderId){
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        CartFragment foodCart = (CartFragment) fragmentManager.findFragmentById(R.id.frame_container_second);
         ConfirmationFragment confirmFragment = new ConfirmationFragment();
         Bundle args = new Bundle();
         args.putLong(ConfirmationFragment.ARG_PURCHASEORDERID, purchaseOrderId);
         confirmFragment.setArguments(args);
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.replace(R.id.frame_container, confirmFragment);
-        transaction.addToBackStack("CONFIRMATION");
+        if(foodCart != null){
+            transaction.replace(R.id.frame_container_second, confirmFragment, "CONFIRMFRAG");
+        }
+        else{
+            transaction.replace(R.id.frame_container, confirmFragment);
+            transaction.addToBackStack("CONFIRMATION");
+        }
+
         transaction.commit();
     }
 
