@@ -22,8 +22,7 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity implements
         MenuFragment.OnMenuListener, FoodFragment.OnAdditemListener, MenuFragment.DbProvider,
         FoodFragment.DbProvider, CartFragment.DbProvider, CartFragment.OnConfirmationListener,
-        ConfirmationFragment.DbProvider, ConfirmationFragment.OnOkListener
-        {
+        ConfirmationFragment.DbProvider, ConfirmationFragment.OnOkListener {
 
     private SQLiteDatabase mReadOnlyDb;
     private SQLiteDatabase mWritableDb;
@@ -32,6 +31,7 @@ public class MainActivity extends AppCompatActivity implements
     private int numberOfItems;
     Menu mMenu;
     int mPosition;
+    private CartAsyncTask mCartAsynTask;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -181,29 +181,10 @@ public class MainActivity extends AppCompatActivity implements
 
     public void addQuantity(int food, int quantity) {
         //mQuantityArray[food] += quantity;
-        mQuantityArray.add(food, quantity);
+        mQuantityArray.add(food, mQuantityArray.get(food) + quantity);
         MenuItem hideCart = mMenu.findItem(R.id.shopping_cart);
         hideCart.setVisible(true);
         getSupportFragmentManager().popBackStackImmediate();
-    }
-
-
-    public void onBackPressed(){
-        MenuItem hideCart = mMenu.findItem(R.id.shopping_cart);
-        hideCart.setVisible(true);
-        super.onBackPressed();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        if(isFinishing()) {
-            mReadOnlyDb.close();
-            mWritableDb.close();
-        }
-        // save updated data in retainedFragment
-        mDataFragment.setPosition(mPosition);
-        mDataFragment.setQuantities(mQuantityArray);
     }
 
     public SQLiteDatabase getmReadOnlyDb(){
@@ -213,9 +194,13 @@ public class MainActivity extends AppCompatActivity implements
         return mWritableDb;
     }
 
-    public void onConfirmation(long purchaseOrderId){
-        //mQuantityArray = new ArrayList<>();
-        resetCart();
+    public void onConfirmation(CartTaskHelper cartTaskHelper){
+        CartAsyncTask ca = new CartAsyncTask(this,mWritableDb,cartTaskHelper);
+        mCartAsynTask = ca;
+        ca.execute();
+    }
+
+    public void createConfirmationFrag(long purchaseOrderId){
         ConfirmationFragment confirmFragment = new ConfirmationFragment();
         Bundle args = new Bundle();
         args.putLong(ConfirmationFragment.ARG_PURCHASEORDERID, purchaseOrderId);
@@ -228,13 +213,8 @@ public class MainActivity extends AppCompatActivity implements
 
     public void onOkClicked(){
         super.finish();
-        /*MenuItem hideCart = mMenu.findItem(R.id.shopping_cart);
-        hideCart.setVisible(true);
-        MenuFragment foodMenu = new MenuFragment();
-        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        ft.replace(R.id.frame_container, foodMenu);
-        ft.commit();*/
     }
+
     public void resetCart() {
         if (numberOfItems == -1) {
             String[] projection = {
@@ -265,7 +245,26 @@ public class MainActivity extends AppCompatActivity implements
             }
         }
         for (int i = 0; i < numberOfItems; i++)
-            mQuantityArray.add(-1);
+            mQuantityArray.add(0);
+    }
+
+    public void onBackPressed(){
+        MenuItem hideCart = mMenu.findItem(R.id.shopping_cart);
+        hideCart.setVisible(true);
+        super.onBackPressed();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if(isFinishing()) {
+            mReadOnlyDb.close();
+            mWritableDb.close();
+        }
+        if (mCartAsynTask != null) mCartAsynTask.cancel(true);
+        // save updated data in retainedFragment
+        mDataFragment.setPosition(mPosition);
+        mDataFragment.setQuantities(mQuantityArray);
     }
 
 

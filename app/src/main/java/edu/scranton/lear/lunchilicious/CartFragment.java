@@ -27,7 +27,7 @@ import java.util.Date;
 public class CartFragment extends Fragment implements View.OnClickListener{
 
     public interface OnConfirmationListener {
-        void onConfirmation(long purchaseOrderId);
+        void onConfirmation(CartTaskHelper cartTaskHelper);
     }
 
     public interface DbProvider {
@@ -232,7 +232,11 @@ public class CartFragment extends Fragment implements View.OnClickListener{
     @Override
     public void onClick(View v) {
         if (v.getId() == mButtonIds.get(0)){
-            //purchase order
+            CartTaskHelper cartTaskHelper = new CartTaskHelper();
+            cartTaskHelper.setQuantities(mFoodQuantities);
+            cartTaskHelper.setFoods(mFoods);
+            cartTaskHelper.setTotal(mTotal);
+            /*//purchase order
             String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
             ContentValues purchaseOrder = new ContentValues();
             purchaseOrder.put(CartOrderContract.PurchaseOrder.COLUMN_NAME_ORDERDATE, timeStamp);
@@ -252,9 +256,9 @@ public class CartFragment extends Fragment implements View.OnClickListener{
                     orderDetails.put(CartOrderContract.OrderDetails.COLUMN_NAME_QUANTITY, mFoodQuantities.get(i));
                     mWritableDb.insert(CartOrderContract.OrderDetails.TABLE_NAME,null,orderDetails);
                 }
-            }
+            }*/
 
-            mConfirmationListener.onConfirmation(purchaseOrderId);
+            mConfirmationListener.onConfirmation(cartTaskHelper);
         }
     }
 
