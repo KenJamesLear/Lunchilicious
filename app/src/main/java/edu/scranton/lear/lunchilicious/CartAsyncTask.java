@@ -10,16 +10,13 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
-/**
- * Created by teddylear on 4/27/2016.
- */
 public class CartAsyncTask extends AsyncTask<Void, Void, CartTaskHelper> {
     private WeakReference<MainActivity> mWeakRefActivity;
     private SQLiteDatabase mWritableDb;
     private CartTaskHelper mCartTaskHelper;
 
     public CartAsyncTask(MainActivity mainActivity, SQLiteDatabase writableDb, CartTaskHelper cartTaskHelper) {
-        this.mWeakRefActivity = new WeakReference<MainActivity>(mainActivity);
+        this.mWeakRefActivity = new WeakReference<>(mainActivity);
         this.mWritableDb = writableDb;
         this.mCartTaskHelper = cartTaskHelper;
     }
@@ -63,8 +60,6 @@ public class CartAsyncTask extends AsyncTask<Void, Void, CartTaskHelper> {
         MainActivity mainActivity = mWeakRefActivity.get();
         if (mainActivity == null)return;
         mainActivity.createConfirmationFrag(cartTaskHelper.getPurchaseOrderId());
-        cartTaskHelper = null;
-        mainActivity = null;
     }
 
 }

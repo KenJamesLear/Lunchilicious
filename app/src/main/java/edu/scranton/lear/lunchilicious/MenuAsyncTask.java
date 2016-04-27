@@ -1,21 +1,18 @@
 package edu.scranton.lear.lunchilicious;
 
-import android.content.Context;
+
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
-/**
- * Created by teddylear on 4/26/2016.
- */
 public class MenuAsyncTask extends AsyncTask<Void, Void, ArrayList<String>>{
     private WeakReference<MenuFragment> mWeakRefActivity;
     private SQLiteDatabase mReadOnlyDb;
 
     public MenuAsyncTask(MenuFragment menuFrag, SQLiteDatabase readOnlyDb) {
-        this.mWeakRefActivity = new WeakReference<MenuFragment>(menuFrag);
+        this.mWeakRefActivity = new WeakReference<>(menuFrag);
         this.mReadOnlyDb = readOnlyDb;
     }
 
@@ -62,7 +59,6 @@ public class MenuAsyncTask extends AsyncTask<Void, Void, ArrayList<String>>{
         MenuFragment menuFrag = mWeakRefActivity.get();
         if (menuFrag == null)return;
         menuFrag.setMenuItems(foodNames);
-        menuFrag = null;
     }
 
 }

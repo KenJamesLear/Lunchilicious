@@ -7,16 +7,13 @@ import android.os.AsyncTask;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
-/**
- * Created by teddylear on 4/26/2016.
- */
 public class ConfirmationAsyncTask extends AsyncTask<Void, Void, ConfirmationTaskHelper> {
     private WeakReference<ConfirmationFragment> mWeakRefActivity;
     private SQLiteDatabase mReadOnlyDb;
     private long mPurchaseOrderId;
 
     public ConfirmationAsyncTask(ConfirmationFragment confirmFrag, SQLiteDatabase readOnlyDb, long purchaseOrderId) {
-        this.mWeakRefActivity = new WeakReference<ConfirmationFragment>(confirmFrag);
+        this.mWeakRefActivity = new WeakReference<> (confirmFrag);
         this.mReadOnlyDb = readOnlyDb;
         this.mPurchaseOrderId = purchaseOrderId;
     }
@@ -122,7 +119,6 @@ public class ConfirmationAsyncTask extends AsyncTask<Void, Void, ConfirmationTas
         ConfirmationFragment confirmFrag = mWeakRefActivity.get();
         if (confirmFrag == null)return;
         confirmFrag.setConfirmItems(confirmationTaskHelper);
-        confirmFrag = null;
     }
 
 }
