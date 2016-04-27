@@ -1,7 +1,9 @@
 package edu.scranton.lear.lunchilicious;
 
+import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
@@ -15,6 +17,8 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+
 public class MainActivity extends AppCompatActivity implements
         MenuFragment.OnMenuListener, FoodFragment.OnAdditemListener, MenuFragment.DbProvider,
         FoodFragment.DbProvider, CartFragment.DbProvider, CartFragment.OnConfirmationListener,
@@ -24,7 +28,8 @@ public class MainActivity extends AppCompatActivity implements
     private SQLiteDatabase mReadOnlyDb;
     private SQLiteDatabase mWritableDb;
     private RetainedFragment mDataFragment;
-    private int[] mQuantityArray;
+    private ArrayList<Integer> mQuantityArray;
+    private int numberOfItems;
     Menu mMenu;
     int mPosition;
 
@@ -35,15 +40,10 @@ public class MainActivity extends AppCompatActivity implements
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        CartOrderDbOpenHelper dbHelper = new CartOrderDbOpenHelper(this);
-
-        mReadOnlyDb = dbHelper.getReadableDatabase();
-        mWritableDb = dbHelper.getWritableDatabase();
-
-
         FragmentManager fm = getSupportFragmentManager();
         mDataFragment = (RetainedFragment) fm.findFragmentByTag("retained_data");
-
+        mQuantityArray = new ArrayList<>();
+        numberOfItems = -1;
         if (mDataFragment == null) {
             // add the fragment
             mDataFragment = new RetainedFragment();
@@ -55,13 +55,21 @@ public class MainActivity extends AppCompatActivity implements
             ft.commit();
             // load the data from the web
             mPosition = 0;
-            mQuantityArray = getResources().getIntArray(R.array.quantityOfItems);
             mDataFragment.setPosition(mPosition);
             mDataFragment.setQuantities(mQuantityArray);
 
+            CartOrderDbOpenHelper dbHelper = new CartOrderDbOpenHelper(this);
+            mReadOnlyDb = dbHelper.getReadableDatabase();
+            mWritableDb = dbHelper.getWritableDatabase();
+
+            mDataFragment.setReadOnlyDb(mReadOnlyDb);
+            mDataFragment.setWritableDb(mWritableDb);
+            resetCart();
         }
         mPosition = mDataFragment.getPosition();
         mQuantityArray = mDataFragment.getQuantities();
+        mReadOnlyDb = mDataFragment.getReadOnlyDb();
+        mWritableDb = mDataFragment.getWritableDb();
 
 
 
@@ -156,7 +164,7 @@ public class MainActivity extends AppCompatActivity implements
             CartFragment foodCart;
             foodCart = new CartFragment();
             Bundle args = new Bundle();
-            args.putIntArray(CartFragment.ARG_QUANTITIES, mQuantityArray);
+            args.putIntegerArrayList(CartFragment.ARG_QUANTITIES, mQuantityArray);
             foodCart.setArguments(args);
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
             if (foodDescription != null) {
@@ -172,7 +180,8 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     public void addQuantity(int food, int quantity) {
-        mQuantityArray[food] += quantity;
+        //mQuantityArray[food] += quantity;
+        mQuantityArray.add(food, quantity);
         MenuItem hideCart = mMenu.findItem(R.id.shopping_cart);
         hideCart.setVisible(true);
         getSupportFragmentManager().popBackStackImmediate();
@@ -188,10 +197,10 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onDestroy() {
         super.onDestroy();
-
-        if (mReadOnlyDb != null) mReadOnlyDb.close();
-        if (mWritableDb != null) mWritableDb.close();
-
+        if(isFinishing()) {
+            mReadOnlyDb.close();
+            mWritableDb.close();
+        }
         // save updated data in retainedFragment
         mDataFragment.setPosition(mPosition);
         mDataFragment.setQuantities(mQuantityArray);
@@ -205,7 +214,8 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     public void onConfirmation(long purchaseOrderId){
-        mQuantityArray = getResources().getIntArray(R.array.quantityOfItems);
+        //mQuantityArray = new ArrayList<>();
+        resetCart();
         ConfirmationFragment confirmFragment = new ConfirmationFragment();
         Bundle args = new Bundle();
         args.putLong(ConfirmationFragment.ARG_PURCHASEORDERID, purchaseOrderId);
@@ -217,12 +227,45 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     public void onOkClicked(){
-        MenuItem hideCart = mMenu.findItem(R.id.shopping_cart);
+        super.finish();
+        /*MenuItem hideCart = mMenu.findItem(R.id.shopping_cart);
         hideCart.setVisible(true);
         MenuFragment foodMenu = new MenuFragment();
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         ft.replace(R.id.frame_container, foodMenu);
-        ft.commit();
+        ft.commit();*/
+    }
+    public void resetCart() {
+        if (numberOfItems == -1) {
+            String[] projection = {
+                    CartOrderContract.Product.COLUMN_NAME_NAME,
+            };
+            Cursor c = null;
+            try {
+                c = mReadOnlyDb.query(
+                        CartOrderContract.Product.TABLE_NAME,          // table name
+                        projection,                   // The columns to return
+                        null,                    // The columns for the WHERE clause
+                        null,                    // The values for the WHERE clause
+                        null,                         // don't group the rows
+                        null,                         // don't filter by row groups
+                        null                     // The sort order
+                );
+
+                numberOfItems = c.getCount();
+                // get data out of cursor, i.e.,
+                // firstName = cursor.getString(1);
+            } catch (Exception e) {
+
+                // handle all exceptions as needed
+            } finally {     // this guarantees the cursor is closed.
+                if (c != null) {
+                    c.close();
+                }
+            }
+        }
+        for (int i = 0; i < numberOfItems; i++)
+            mQuantityArray.add(-1);
     }
 
 

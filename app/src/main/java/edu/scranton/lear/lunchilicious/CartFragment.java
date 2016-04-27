@@ -37,7 +37,7 @@ public class CartFragment extends Fragment implements View.OnClickListener{
 
     //private OnCartCancelListener mCancelListener;
     public static final String ARG_QUANTITIES ="edu.scranton.lear.lunchilious.ARG_QUANTITIES";
-    public int[] mFoodQuantities;
+    public ArrayList<Integer> mFoodQuantities;
     private ArrayList<String> mFoods;
     private ArrayList<Double> mCost;
     private LinearLayout mLinearContainer;//changed to private
@@ -64,8 +64,8 @@ public class CartFragment extends Fragment implements View.OnClickListener{
 
 
         Bundle bundle = getArguments();
-        if (bundle != null) mFoodQuantities = bundle.getIntArray(CartFragment.ARG_QUANTITIES);
-        else mFoodQuantities= getResources().getIntArray(R.array.quantityOfItems);
+        if (bundle != null) mFoodQuantities = bundle.getIntegerArrayList(CartFragment.ARG_QUANTITIES);
+        else mFoodQuantities = new ArrayList<>();
 
         mFoods= new ArrayList<>();
         mCost = new ArrayList<>();
@@ -100,15 +100,15 @@ public class CartFragment extends Fragment implements View.OnClickListener{
 
 
         TextView cartDisplay;
-        for (int i = 0;i<mFoodQuantities.length;i++)
+        for (int i = 0;i<mFoodQuantities.size();i++)
         {
-            if (mFoodQuantities[i]>0) {
+            if (mFoodQuantities.get(i)>0) {
                 cartDisplay = new TextView(getActivity());
                 id = View.generateViewId();
                 cartDisplay.setId(id);
                 mTextViews.add(cartDisplay);
                 mViewIds.add(id);
-                cartDisplay.setText(mFoods.get(i) + ":" + mFoodQuantities[i]);
+                cartDisplay.setText(mFoods.get(i) + ":" + mFoodQuantities.get(i));
                 cartDisplay.setFreezesText(true);
                 cartDisplay.setTextSize(TypedValue.COMPLEX_UNIT_SP, 30);
                 cartDisplay.setLayoutParams(params);
@@ -126,7 +126,11 @@ public class CartFragment extends Fragment implements View.OnClickListener{
         mViewIds.add(id);
         cartTotal.setFreezesText(true);
         cartTotal.setTextSize(TypedValue.COMPLEX_UNIT_SP, 30);
-        mTotal = updateTotal(mFoodQuantities);
+        if (mFoodQuantities.size() > 0){
+            mTotal = updateTotal(mFoodQuantities);
+        }
+        else
+            mTotal = 0;
         DecimalFormat money;
         money = new DecimalFormat("$0.00");
         cartTotal.setText("Total: " + money.format(mTotal));
@@ -215,12 +219,12 @@ public class CartFragment extends Fragment implements View.OnClickListener{
 
     }
 
-    public double updateTotal(int[] quantities){
+    public double updateTotal(ArrayList<Integer> quantities){
         double total = 0;
         for (int i = 0;i<6;i++)
         {
-            if (quantities[i]>0)
-                total += mCost.get(i) *  quantities[i];
+            if (quantities.get(i)>0)
+                total += mCost.get(i) *  quantities.get(i);
         }
         return total;
     }
@@ -237,15 +241,15 @@ public class CartFragment extends Fragment implements View.OnClickListener{
 
             //orderDetails
             int lineNo = 1;
-            int amountOfItems = mFoodQuantities.length;
+            int amountOfItems = mFoodQuantities.size();
             for (int i = 0;i<amountOfItems;i++){
-                if (mFoodQuantities[i] > 0){
+                if (mFoodQuantities.get(i) > 0){
                     ContentValues orderDetails = new ContentValues();
                     orderDetails.put(CartOrderContract.OrderDetails.COLUMN_NAME_PURCHASEORDERID,purchaseOrderId);
                     orderDetails.put(CartOrderContract.OrderDetails.COLUMN_NAME_LINENO,lineNo);
                     lineNo++;
                     orderDetails.put(CartOrderContract.OrderDetails.COLUMN_NAME_PRODUCTNAME, mFoods.get(i));
-                    orderDetails.put(CartOrderContract.OrderDetails.COLUMN_NAME_QUANTITY, mFoodQuantities[i]);
+                    orderDetails.put(CartOrderContract.OrderDetails.COLUMN_NAME_QUANTITY, mFoodQuantities.get(i));
                     mWritableDb.insert(CartOrderContract.OrderDetails.TABLE_NAME,null,orderDetails);
                 }
             }
@@ -253,6 +257,7 @@ public class CartFragment extends Fragment implements View.OnClickListener{
             mConfirmationListener.onConfirmation(purchaseOrderId);
         }
     }
+
 
 
 

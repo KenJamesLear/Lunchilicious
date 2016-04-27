@@ -10,6 +10,7 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -45,6 +46,7 @@ public class ConfirmationFragment extends Fragment implements View.OnClickListen
     private ArrayList<Button> mButtons;
     private ArrayList<Integer> mButtonIds;
     private OnOkListener mOnOkListener;
+    private ConfirmationAsyncTask mConfirmationAsynTask;
 
     public ConfirmationFragment() {
         // Required empty public constructor
@@ -77,6 +79,9 @@ public class ConfirmationFragment extends Fragment implements View.OnClickListen
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         mReadOnlyDb = provider.getmReadOnlyDb();
+        ConfirmationAsyncTask ca = new ConfirmationAsyncTask(this,mReadOnlyDb,mPurchaseOrderId);
+        mConfirmationAsynTask = ca;
+        ca.execute();
     }
 
     @Override
@@ -86,13 +91,10 @@ public class ConfirmationFragment extends Fragment implements View.OnClickListen
         View view = inflater.inflate(R.layout.fragment_confirmation, container, false);
         mLinearContainer = (LinearLayout) view.findViewById(R.id.my_linearlayout_confirmation);
 
-       mReadOnlyDb = provider.getmReadOnlyDb();
-        //TextView confirmationItemDisplay = (TextView) view.findViewById(R.id.item_display);
-        //TextView confirmationTotalDisplay = (TextView) view.findViewById(R.id.cost_display);
+        //mReadOnlyDb = provider.getmReadOnlyDb();
 
 
-        //TODO CHANGE THIS
-        String[] projection = {
+        /*String[] projection = {
                 //CartOrderContract.OrderDetails.COLUMN_NAME_PURCHASEORDERID
                 CartOrderContract.OrderDetails.COLUMN_NAME_PRODUCTNAME,
                 CartOrderContract.OrderDetails.COLUMN_NAME_QUANTITY
@@ -131,19 +133,10 @@ public class ConfirmationFragment extends Fragment implements View.OnClickListen
         }
 
 
-        /*String output = "Welcome to the Cart: \n";
-        for (int i = 0;i<mQuantity.size();i++)
-        {
-            //if (mQuantity.get(i)>0) {
-                output += mFoods.get(i) + ": " + mQuantity.get(i) + "\n";
-            //}
-        }
-        confirmationItemDisplay.setText( output );*/
-
         double total;
         //ArrayList<Integer> mTest = new ArrayList<>();
 
-        //TODO CHANGE THIS
+
         String[] projectionTwo = {
                 //CartOrderContract.PurchaseOrder._ID
                 CartOrderContract.PurchaseOrder.COLUMN_NAME_TOTALCOST
@@ -179,21 +172,9 @@ public class ConfirmationFragment extends Fragment implements View.OnClickListen
             if(c != null) {
                 c.close();
             }
-        }
+        }*/
 
-        /*DecimalFormat money;
-        money = new DecimalFormat("$0.00");
-        String confirmTotal = "";
-        /*for (int i=0;i<mTest.size();i++){
-            confirmTotal += mTest.get(i) + "\n";
-        }
-
-        for (int i = 0;i<mTotals.size();i++)
-        {
-            confirmTotal += money.format(mTotals.get(i));
-        }
-        confirmationTotalDisplay.setText("Total: " + confirmTotal);*/
-        inflateLinearContainer();
+        //inflateLinearContainer();
         return view;
 
     }
@@ -280,5 +261,18 @@ public class ConfirmationFragment extends Fragment implements View.OnClickListen
 
     public void onClick(View v) {
         mOnOkListener.onOkClicked();
+    }
+
+    public void setConfirmItems(ConfirmationTaskHelper confirmationTaskHelper){
+        mFoods = confirmationTaskHelper.getFoods();
+        mTotals = confirmationTaskHelper.getTotals();
+        mQuantity = confirmationTaskHelper.getQuantities();
+        inflateLinearContainer();
+    }
+
+    public void onDestroy() {
+        mReadOnlyDb = null;
+        if (mConfirmationAsynTask != null) mConfirmationAsynTask.cancel(true);
+        super.onDestroy();
     }
 }
